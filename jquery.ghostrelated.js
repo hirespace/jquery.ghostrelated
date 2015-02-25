@@ -34,7 +34,7 @@
 
         related.forEach(function(post) {
             if (count < self.options.limit) {
-                $(self.element).append($('<li><a href="' + post.url + '">' + post.title + '</a></li>'));
+                $(self.element).append($('<div class="post-tile" style="height: auto;"><a style="display:block" href="' + post.url + '"><div class="post-image categoryshadow" style="background:url(' + post.image + ') no-repeat center center /cover;"></div><h3>post.title</h3></a></div>'));
             }
             count++;
         });
@@ -113,7 +113,7 @@
 
     RelatedPosts.prototype.getPosts = function(feeds) {
 
-        var posts = [], items = [];
+        var posts = [], items = [], description = '', image = null;
 
         feeds.forEach(function(feed) {
             items = $.merge(items, $(feed).find('item'));
@@ -125,10 +125,13 @@
 
             if (item.find('title').text() !== this.getCurrentPostTitle(this.options.titleClass)) {
 
+                description = item.find('description').text() | '';
+                image = /<img\ssrc\=\"([^\"]*)\"/.exec(description);
                 posts.push({
                     title: item.find('title').text(),
                     url: item.find('link').text(),
-                    content: item.find('description').text(),
+                    content: description,
+                    image: image ? image | '',
                     tags: $.map(item.find('category'), function(elem) {
                         return $(elem).text();
                     })
