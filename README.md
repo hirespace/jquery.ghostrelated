@@ -37,18 +37,14 @@ $('.related-posts').ghostRelated();
 The theme has some default options defined for you. Based on your theme you may need to override some of these when you initiate the plugin
 ```javascript
 defaults = {
-    feed: '/rss',
-    titleClass: '.post-title',
-    tagsClass: '.post-meta',
+    feed: 'https://hirespace.com/london-review/rss/',
+    limit: 3,
     debug: false
 }
 ```
             
 #### feed:
-This is the location of the rss feed for your blog. Ghost uses /rss, so you shouldn't need to change this.
-
-#### titleClass:
-This is the class identifier for the heading element for your single post title. This makes sure that the post that is currently being read does not come back as a related post.
+This is the location of the rss feed for your blog. We use route our blog to a path so the default is an absolute.
 
 Ghost's default casper theme uses: `<h2 class="post-title">Title of current post</h2>` by default.
 
@@ -68,7 +64,7 @@ So the option uses .post-meta and the plugin looks for the anchor tags inside of
 
 #### limit:
 
-Limit amount of related posts to be displayed
+Limit amount of recent posts to be displayed
 
 #### debug:
 
@@ -78,14 +74,10 @@ If the plugin isn't returning any related posts, set this option to true. This o
 
 ```javascript
 $('.related-posts').ghostRelated({
-    titleClass: '.my-title',
-    tagsClass: '.my-tags-class'
+    feed: 'https://hirespace.com/london-review/rss/',
+    limit: 3
 });
 ```
-            
-            
-## Roadmap
-* More advanced post matching
 
 ## Browser Support
 This plugin officially supports IE9+. You can include this [polyfill](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach#Polyfill) in your theme for any browsers that don't support the JavaScript forEach() funciton.

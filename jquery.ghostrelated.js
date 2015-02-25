@@ -7,10 +7,10 @@
 ;(function($) {
 
     defaults = {
-        feed: '/rss',
+        feed: 'https://hirespace.com/london-review/rss/',
         titleClass: '.post-title',
         tagsClass: '.post-meta',
-        limit: 5,
+        limit: 3,
         debug: false
     }
 
@@ -23,21 +23,25 @@
         this.parseRss();
     };
 
-    RelatedPosts.prototype.displayRelated = function(posts) {
+    RelatedPosts.prototype.displayPosts = function(posts) {
 
         var self = this,
             count = 0;
 
-        this._currentPostTags = this.getCurrentPostTags(this.options.tagsClass);
-
-        var related = this.matchByTag(this._currentPostTags, posts);
-
-        related.forEach(function(post) {
-            if (count < self.options.limit) {
-                $(self.element).append($('<div class="post-tile" style="height: auto;"><a style="display:block" href="' + post.url + '"><div class="post-image categoryshadow" style="background:url(' + post.image + ') no-repeat center center /cover;"></div><h3>post.title</h3></a></div>'));
-            }
+        //Let's mix these up so it's not just a chronological list
+        //Evens first
+        for (var i = 0; i < posts.length; i=i+2) {
+            if (count == self.options.limit) break;
+            $(self.element).append($('<div class="post-tile" style="height: auto;"><a style="display:block" href="' + posts[i].url + '"><div class="post-image categoryshadow" style="background:url(' + posts[i].image + ') no-repeat center center /cover;"></div><h3>' + posts[i].title + '</h3></a></div>'));
             count++;
-        });
+        }
+
+        //Then odds
+        for (var i = 1; i < posts.length; i=i+2) {
+            if (count == self.options.limit) break;
+            $(self.element).append($('<div class="post-tile" style="height: auto;"><a style="display:block" href="' + posts[i].url + '"><div class="post-image categoryshadow" style="background:url(' + posts[i].image + ') no-repeat center center /cover;"></div><h3>' + posts[i].title + '</h3></a></div>'));
+            count++;
+        }
 
         if (count == 0) {
             $(this.element).append($('<p>No related posts were found. ' +
@@ -46,28 +50,23 @@
     
     };
 
-    RelatedPosts.prototype.parseRss = function(pageNum, prevId, feeds) {
+    RelatedPosts.prototype.parseRss = function() {
 
-        var page = pageNum || 1,
-            prevId = prevId || '',
-            feeds = feeds || [],
+        var page = 1,
+            prevId = '',
+            feeds = [],
             self = this;
 
         $.ajax({
-            url: this.options.feed + '/' + page,
+            url: this.options.feed,
             type: 'GET'
         })
         .done(function(data, textStatus, xhr) {
 
             var curId = $(data).find('item > guid').text();
-
-            if (curId != prevId) {
-                feeds.push(data);
-                self.parseRss(page+1, curId, feeds);
-            } else {
-                var posts = self.getPosts(feeds);
-                self.displayRelated(posts);
-            }
+            feeds.push(data);
+            var posts = self.getPosts(feeds);
+            self.displayPosts(posts);
 
         })
         .fail(function(e) {
@@ -75,41 +74,6 @@
         });
 
     };
-
-    RelatedPosts.prototype.getCurrentPostTitle = function(titleClass) {
-
-        if (titleClass[0] != '.') {
-            titleClass = '.' + titleClass;
-        }
-
-        var postTitle = $(titleClass).text();
-
-        if (postTitle.length < 1) {
-            this.reportError("Couldn't find the post title with class: " + titleClass);
-        }
-
-        return postTitle;
-    };
-
-
-    RelatedPosts.prototype.getCurrentPostTags = function(tagsClass) {
-
-        if (tagsClass[0] != '.') {
-            tagsClass = '.' + tagsClass;
-        }
-
-        var tags = [];
-        $(tagsClass + ' a').each(function() {
-            tags.push($(this).text());
-        });
-
-        if (tags.length < 1) {
-            this.reportError("Couldn't find any tags in this post");
-        }
-
-        return tags;
-    };
-
 
     RelatedPosts.prototype.getPosts = function(feeds) {
 
@@ -123,20 +87,20 @@
 
             var item = $(items[i]);
 
-            if (item.find('title').text() !== this.getCurrentPostTitle(this.options.titleClass)) {
+            description = item.find('description').text();
+            console.log(description);
+            image = /<img\ssrc\=\"([^\"]*)\"/.exec(description);
+            console.log(JSON.stringify(image));
+            posts.push({
+                title: item.find('title').text(),
+                url: item.find('link').text(),
+                content: description,
+                image: image ? image[1] : '',
+                tags: $.map(item.find('category'), function(elem) {
+                    return $(elem).text();
+                })
+            });
 
-                description = item.find('description').text() | '';
-                image = /<img\ssrc\=\"([^\"]*)\"/.exec(description);
-                posts.push({
-                    title: item.find('title').text(),
-                    url: item.find('link').text(),
-                    content: description,
-                    image: image ? image | '',
-                    tags: $.map(item.find('category'), function(elem) {
-                        return $(elem).text();
-                    })
-                });
-            }
         }
 
         if (posts.length < 1) {
@@ -144,33 +108,6 @@
         }
 
         return posts;
-    };
-
-
-    RelatedPosts.prototype.matchByTag = function(postTags, posts) {
-
-        var matches = [];
-
-        posts.forEach(function(post) {
-
-            var beenAdded = false;
-            post.tags.forEach(function(tag) {
-
-                postTags.forEach(function(postTag) {
-
-                    if (postTag.toLowerCase() === tag.toLowerCase() && !beenAdded) {
-                        matches.push(post);
-                        beenAdded = true;
-                    }
-                });
-            });
-        });
-
-        if (matches.length < 1) {
-            this.reportError("There are no closely related posts");
-        }
-
-        return matches;
     };
 
 
